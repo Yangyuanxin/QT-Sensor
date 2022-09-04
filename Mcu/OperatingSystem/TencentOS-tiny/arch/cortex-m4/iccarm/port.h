@@ -259,6 +259,7 @@ __PORT__ void       HardFault_Handler(void);
 __PORT__ void       port_fault_diagnosis(void);
 #endif
 
+
 #if defined(TOS_CFG_CPU_LEAD_ZEROS_ASM_PRESENT) && (TOS_CFG_CPU_LEAD_ZEROS_ASM_PRESENT == 1u)
 __PORT__ uint32_t   port_clz(uint32_t val);
 #endif

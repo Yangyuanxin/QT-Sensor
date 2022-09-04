@@ -1,19 +1,19 @@
-    PUBLIC  port_int_disable
-    PUBLIC  port_int_enable
+    EXPORT  port_int_disable
+    EXPORT  port_int_enable
 
-    PUBLIC  port_cpsr_save
-    PUBLIC  port_cpsr_restore
+    EXPORT  port_cpsr_save
+    EXPORT  port_cpsr_restore
 
-    PUBLIC  port_sched_start
-    PUBLIC  port_context_switch
-    PUBLIC  port_irq_context_switch
+    EXPORT  port_sched_start
+    EXPORT  port_context_switch
+    EXPORT  port_irq_context_switch
 
-    PUBLIC  port_clz
+    EXPORT  port_clz
 
-    PUBLIC  PendSV_Handler
+    EXPORT  PendSV_Handler
 
-    EXTERN  k_curr_task
-    EXTERN  k_next_task
+    IMPORT  k_curr_task
+    IMPORT  k_next_task
 
 SCB_VTOR        EQU     0xE000ED08
 NVIC_INT_CTRL   EQU     0xE000ED04
@@ -22,36 +22,44 @@ NVIC_PENDSV_PRI EQU     0xFF
 NVIC_PENDSVSET  EQU     0x10000000
 
 
-    RSEG CODE:CODE:NOROOT(2)
+    AREA |.text|, CODE, READONLY, ALIGN=2
     THUMB
+    REQUIRE8
+    PRESERVE8
 
 
+    GLOBAL port_int_disable
 port_int_disable
     CPSID   I
     BX      LR
 
 
+    GLOBAL port_int_enable
 port_int_enable
     CPSIE   I
     BX      LR
 
 
+    GLOBAL port_cpsr_save
 port_cpsr_save
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
 
 
+    GLOBAL port_cpsr_restore
 port_cpsr_restore
     MSR     PRIMASK, R0
     BX      LR
 
 
+    GLOBAL port_clz
 port_clz
     CLZ     R0, R0
     BX      LR
 
 
+    GLOBAL port_sched_start
 port_sched_start
     CPSID   I
 
@@ -88,6 +96,11 @@ port_sched_start
     ; restore r4-11 from new process stack
     LDMFD   SP!, {R4 - R11}
 
+    IF {FPU} != "SoftVFP"
+    ; ignore EXC_RETURN the first switch
+    LDMFD   SP!, {R0}
+    ENDIF
+
     ; restore r0, r3
     LDMFD    SP!, {R0 - R3}
     ; load R12 and LR
@@ -99,6 +112,7 @@ port_sched_start
     BX       R1
 
 
+    GLOBAL port_context_switch
 port_context_switch
     LDR     R0, =NVIC_INT_CTRL
     LDR     R1, =NVIC_PENDSVSET
@@ -106,6 +120,7 @@ port_context_switch
     BX      LR
 
 
+    GLOBAL port_irq_context_switch
 port_irq_context_switch
     LDR     R0, =NVIC_INT_CTRL
     LDR     R1, =NVIC_PENDSVSET
@@ -113,12 +128,23 @@ port_irq_context_switch
     BX      LR
 
 
+    GLOBAL PendSV_Handler
 PendSV_Handler
     CPSID   I
     MRS     R0, PSP
 
 _context_save
     ; R0-R3, R12, LR, PC, xPSR is saved automatically here
+    IF {FPU} != "SoftVFP"
+    ; is it extended frame?
+    TST     LR, #0x10
+    IT      EQ
+    VSTMDBEQ  R0!, {S16 - S31}
+    ; S0 - S16, FPSCR saved automatically here
+
+    ; save EXC_RETURN
+    STMFD   R0!, {LR}
+    ENDIF
 
     ; save remaining regs r4-11 on process stack
     STMFD   R0!, {R4 - R11}
@@ -141,6 +167,15 @@ _context_restore
     ; restore R4 - R11
     LDMFD   R0!, {R4 - R11}
 
+    IF {FPU} != "SoftVFP"
+    ; restore EXC_RETURN
+    LDMFD   R0!, {LR}
+    ; is it extended frame?
+    TST     LR, #0x10
+    IT      EQ
+    VLDMIAEQ    R0!, {S16 - S31}
+    ENDIF
+
     ; Load PSP with new process SP
     MSR     PSP, R0
     CPSIE   I
@@ -148,5 +183,6 @@ _context_restore
     ; S0 - S16, FPSCR restored automatically here if FPCA = 1
     BX      LR
 
+    ALIGN
     END
 

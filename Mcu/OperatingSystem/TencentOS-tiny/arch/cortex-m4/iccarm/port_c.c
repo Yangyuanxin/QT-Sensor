@@ -15,8 +15,33 @@
  * within TencentOS.
  *---------------------------------------------------------------------------*/
 
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016-2018 Armink (armink.ztl@gmail.com)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * 'Software'), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 #include "tos_k.h"
-#include "core_cm3.h"
+#include "core_cm4.h"
 
 __PORT__ void port_cpu_reset(void)
 {
@@ -55,6 +80,11 @@ __PORT__ void port_systick_suspend(void)
 {
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
     SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+}
+
+__PORT__ k_cycle_t port_systick_max_reload_cycle(void)
+{
+    return SysTick_LOAD_RELOAD_Msk;
 }
 
 __PORT__ void port_systick_reload(uint32_t cycle_per_tick)
@@ -155,7 +185,6 @@ __STATIC__ void port_fault_do_diagnosis(port_fault_regs_t *regs)
             }
 
         }
-
         /* Usage Fault */
         if (regs->cfsr.part.ufsr.value) {
             if (regs->cfsr.part.ufsr.bits.UNDEFINSTR) {
@@ -200,7 +229,7 @@ __STATIC__ void port_fault_do_diagnosis(port_fault_regs_t *regs)
     }
 }
 
-__STATIC__ void port_fault_do_diagnosis(port_fault_regs_t *regs)
+__PORT__ void port_fault_diagnosis(void)
 {
     port_fault_regs_t regs;
 
@@ -215,25 +244,6 @@ __STATIC__ void port_fault_do_diagnosis(port_fault_regs_t *regs)
     port_fault_do_diagnosis(&regs);
 }
 
-/*------------------ RealView Compiler -----------------*/
-/* V5 */
-#if defined(__CC_ARM)
-
-__PORT__ __ASM__ void HardFault_Handler(void)
-{
-    IMPORT  fault_backtrace
-
-    MOV     r0, lr
-    TST     lr, #0x04
-    ITE     EQ
-    MRSEQ   r1, MSP
-    MRSNE   r1, PSP
-    BL      fault_backtrace
-}
-
-/*------------------ ARM Compiler V6 -------------------*/
-#elif defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
-
 __PORT__ void __NAKED__ HardFault_Handler(void)
 {
     __ASM__ __VOLATILE__ (
@@ -242,11 +252,10 @@ __PORT__ void __NAKED__ HardFault_Handler(void)
         "ITE     EQ\n\t"
         "MRSEQ   r1, MSP\n\t"
         "MRSNE   r1, PSP\n\t"
-        "BL      fault_backtrace\n\t"
+        "LDR     r2, =fault_backtrace\n\t"
+        "BX      r2\n\t"
     );
 }
-
-#endif /* ARMCC VERSION */
 
 #endif /* TOS_CFG_FAULT_BACKTRACE_EN */
 

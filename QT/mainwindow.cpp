@@ -52,7 +52,26 @@ void MainWindow::DisplayValue(Sensor_Data info)
     static uint8_t Counter = 0;
     int max = 0, min = 0;
     float average = 0.0;
-    int Value = info.GasHighBit << 8 | info.GasLowBit;
+
+    switch(info.type)
+    {
+    case BEARPI_BH750_SENSOR:
+        ui->SensorTitle->setText(tr("光强值"));
+        ui->SensorUnit->setText(tr("Lux"));
+        ui->curveShowWidget->yAxis->setLabel(QString(tr("光强值Lux")));
+        break;
+
+    case BEARPI_MQ_2_SENSOR:
+        ui->SensorTitle->setText(tr("气体浓度值"));
+        ui->SensorUnit->setText(tr("PPM"));
+        ui->curveShowWidget->yAxis->setLabel(QString(tr("浓度值PPM")));
+        break;
+
+    default:
+        break;
+    }
+
+    int Value = info.DataHighBit << 8 | info.DataLowBit;
     ui->SensorValue->display(Value);
     if(this->PlotMode)
     {

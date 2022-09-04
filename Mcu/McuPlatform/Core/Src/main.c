@@ -27,10 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Lcd.h"
-#include "MQ_2.h"
-#include "Bh750.h"
-#include "sensor_protocol.h"
+#include "App.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,8 +59,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define BEARPI_BH750_SENSOR 0
-#define BEARPI_MQ_2_SENSOR  1
+
+
 /* USER CODE END 0 */
 
 /**
@@ -72,11 +70,7 @@ void SystemClock_Config(void);
 int main(void)
 {
     /* USER CODE BEGIN 1 */
-    static uint8_t status = 0;
-    int32_t Lux;
-    int smoke_value;
-    char display_buf[20] = {0};
-    uint8_t ProcolBuf[sizeof(SensorProtocol)] = {0};
+
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
@@ -102,10 +96,7 @@ int main(void)
     MX_SPI2_Init();
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
-    Bh750SensorInit(LUX_1_MODE);
-    LCD_Init();
-    LCD_Clear(BLACK);//清屏为黑色
-    LCD_ShowString(5, 10, 240, 32, 32, "BearPi MQ-2");//显示字符串，字体大小32*32
+		RunApp();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -115,44 +106,7 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        switch(status)
-        {
-            case 0:
-                ReadBh750Lux(&Lux, 100, HAL_Delay);
 
-                if(-1 == Lux)
-                {
-                    status = 1;
-                }
-                else
-                {
-                    //传感器数据组包
-										status = 0;
-                    memset(ProcolBuf, 0, sizeof(ProcolBuf));
-                    SetSensorType(BEARPI_BH750_SENSOR);
-                    SensorProcolPacket(SensorGetType(), Lux);
-                    memcpy(ProcolBuf, &Protocol, sizeof(SensorProtocol));
-                    HAL_UART_Transmit(&huart1, ProcolBuf, sizeof(ProcolBuf), 1000);
-                    sprintf(display_buf, "%d%d%d%dLux", Lux / 1000 % 100, Lux / 100 % 10, Lux / 10 % 10, Lux % 10);
-                    LCD_ShowString(80, 50 + 24 + 32, 240, 32, 32, display_buf); //显示字符串，字体大小32*32
-                }
-
-                break;
-
-            case 1:
-                smoke_value = GetSmokeValue() ;
-                //传感器数据组包
-                memset(ProcolBuf, 0, sizeof(ProcolBuf));
-								SetSensorType(BEARPI_MQ_2_SENSOR);
-                SensorProcolPacket(SensorGetType(), smoke_value);
-                memcpy(ProcolBuf, &Protocol, sizeof(SensorProtocol));
-                HAL_UART_Transmit(&huart1, ProcolBuf, sizeof(ProcolBuf), 1000);
-                sprintf(display_buf, "%d%d%d%dppm", smoke_value / 1000 % 100, smoke_value / 100 % 10, smoke_value / 10 % 10, smoke_value % 10);
-                LCD_ShowString(80, 50 + 24 + 32, 240, 32, 32, display_buf); //显示字符串，字体大小32*32
-								status = 0;
-								HAL_Delay(100);
-                break;
-        }
     }
 
     /* USER CODE END 3 */

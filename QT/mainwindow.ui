@@ -65,7 +65,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="SensorTitle">
             <property name="styleSheet">
              <string notr="true">font: 20pt &quot;幼圆&quot;;
 background-color: rgb(0, 255, 0);</string>
@@ -79,7 +79,7 @@ background-color: rgb(0, 255, 0);</string>
            <widget class="QLCDNumber" name="SensorValue"/>
           </item>
           <item>
-           <widget class="QLabel" name="ppm_text">
+           <widget class="QLabel" name="SensorUnit">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -423,7 +423,7 @@ font: 12pt &quot;黑体&quot;;</string>
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>20</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
