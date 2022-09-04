@@ -135,14 +135,17 @@ void MainWindow::Register_Uart_thread()
             index = i;
     }
 
-    uartThread = new QThread(this);
-    uartWorker  = new SerialThread(serial_port.at(index),115200);
-    uartWorker->moveToThread(uartThread);
-    connect(uartThread, &QThread::finished, uartWorker, &QObject::deleteLater);
-    connect(uartWorker, &SerialThread::DataSend, this, &MainWindow::DisplayData);
-    connect(uartWorker, &SerialThread::DataAnalyze, this, &MainWindow::DisplayValue);
-    uartThread->start();
-    uartThread->setPriority(QThread::TimeCriticalPriority);
+    if(serial_port.length() != 0)
+    {
+        uartThread = new QThread(this);
+        uartWorker  = new SerialThread(serial_port.at(index),115200);
+        uartWorker->moveToThread(uartThread);
+        connect(uartThread, &QThread::finished, uartWorker, &QObject::deleteLater);
+        connect(uartWorker, &SerialThread::DataSend, this, &MainWindow::DisplayData);
+        connect(uartWorker, &SerialThread::DataAnalyze, this, &MainWindow::DisplayValue);
+        uartThread->start();
+        uartThread->setPriority(QThread::TimeCriticalPriority);
+    }
 }
 
 void MainWindow::on_ClearUartWindow_clicked()
