@@ -43,18 +43,3 @@ TARGET=SensorTool
 
 #版本信息
 VERSION = 1.3.3
-
-#公司名称
-QMAKE_TARGET_COMPANY = "Copyright(C)    2022,      Anycubic Co.Ltd."
-
-#产品名称
-QMAKE_TARGET_PRODUCT = "Anycubic DebugTool"
-
-#文件说明
-QMAKE_TARGET_DESCRIPTION = "Qt Creator based on Qt 5.14.2 (MinGW 64 bit)"
-
-#版权信息
-QMAKE_TARGET_COPYRIGHT = "Anycubic Co.Ltd."
-
-#中文（简体）
-RC_LANG = 0x0004
